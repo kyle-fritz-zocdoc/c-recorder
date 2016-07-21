@@ -45,8 +45,8 @@ int main(int argc, char **argv)
 		values[index] = analogRead(BASE + ADC_CHANNEL);
 	}
 	clock_gettime(CLOCK_REALTIME, &end);
-	timespec_diff(&start, &end, &duration)
-	double sampleRateHz = (1.0 * sampleCount) / (duration.tv_sec + (duration.tv_nsec / 1000000000.0))
+	timespec_diff(&start, &end, &duration);
+	double sampleRateHz = (1.0 * sampleCount) / (duration.tv_sec + (duration.tv_nsec / 1000000000.0));
 	printf("duration: %lld.%.9ld\n", (long long)duration.tv_sec, duration.tv_nsec);
 	printf("sample rate: %f\n", sampleRateHz);
 	
