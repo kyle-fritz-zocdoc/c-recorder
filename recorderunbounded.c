@@ -16,7 +16,6 @@
 #define ADC_CHANNEL 7
 
 // wav file builder - begin
-#define WAVFILE_SAMPLES_PER_SECOND 23415
 
 struct wavfile_header {
 	char	riff_tag[4];
@@ -39,7 +38,8 @@ FILE * wavfile_open( const char *filename, int samplerate)
 	struct wavfile_header header;
 
 	int samples_per_second = samplerate;
-	int bits_per_sample = 16;
+	short bits_per_sample = 10;
+	short block_align = 2;
 
 	strncpy(header.riff_tag,"RIFF",4);
 	strncpy(header.wave_tag,"WAVE",4);
@@ -51,8 +51,8 @@ FILE * wavfile_open( const char *filename, int samplerate)
 	header.audio_format = 1;
 	header.num_channels = 1;
 	header.sample_rate = samples_per_second;
-	header.byte_rate = samples_per_second*(bits_per_sample/8);
-	header.block_align = bits_per_sample/8;
+	header.byte_rate = (samples_per_second*bits_per_sample + 7)/8; // Add seven so that the divide always rounds up.
+	header.block_align = block_align;
 	header.bits_per_sample = bits_per_sample;
 	header.data_length = 0;
 
@@ -138,20 +138,13 @@ int main(int argc, char **argv)
 	printf("duration: %lld.%.9ld\n", (long long)duration.tv_sec, duration.tv_nsec);
 	printf("sample rate: %f\n", sampleRateHz);
 	
-	FILE* file = wavfile_open("sound.wav",(int)sampleRateHz);//)WAVFILE_SAMPLES_PER_SECOND);
+	FILE* file = wavfile_open("sound.wav",(int)sampleRateHz);
 	if(!file)
 	{
 		printf("Could not open file sound.wav");
 		return 0;
 	}
 
-	//printf("\nsize of short %d, Int %d", sizeof(short), sizeof(int));
-	//wav create end 
-	for (index = 0; index < sampleCount; index++)
-	{
-		//printf("%i\n", values[index]);
-		values[index] += 500;
-	}
 	wavfile_write(file, values, sampleCount);
 	wavfile_close(file);
 	
