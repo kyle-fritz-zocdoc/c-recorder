@@ -38,28 +38,28 @@ FILE * wavfile_open( const char *filename, int samplerate)
 	struct wavfile_header header;
 
 	int samples_per_second = samplerate;
-	short bits_per_sample = 10;
-	short block_align = 2;
+	short bits_per_sample = 16;
+	short block_align = (bits_per_sample + 7) / 8; // Add seven so that the divide always rounds up.
 
-	strncpy(header.riff_tag,"RIFF",4);
-	strncpy(header.wave_tag,"WAVE",4);
-	strncpy(header.fmt_tag,"fmt ",4);
-	strncpy(header.data_tag,"data",4);
+	strncpy(header.riff_tag, "RIFF", 4);
+	strncpy(header.wave_tag, "WAVE", 4);
+	strncpy(header.fmt_tag, "fmt ", 4);
+	strncpy(header.data_tag, "data", 4);
 
 	header.riff_length = 0;
 	header.fmt_length = 16;
 	header.audio_format = 1;
 	header.num_channels = 1;
 	header.sample_rate = samples_per_second;
-	header.byte_rate = (samples_per_second*bits_per_sample + 7)/8; // Add seven so that the divide always rounds up.
+	header.byte_rate = (samples_per_second * bits_per_sample + 7) / 8; // Add seven so that the divide always rounds up.
 	header.block_align = block_align;
 	header.bits_per_sample = bits_per_sample;
 	header.data_length = 0;
 
-	FILE * file = fopen(filename,"w+");
+	FILE * file = fopen(filename, "w+");
 	if(!file) return 0;
 
-	fwrite(&header,sizeof(header),1,file);
+	fwrite(&header,sizeof(header), 1, file);
 
 	fflush(file);
 
@@ -125,7 +125,7 @@ int main(int argc, char **argv)
 	int sampleCount = 22 * 1000 * 10;
 	
 	int index;
-	short  values[sampleCount];
+	short values[sampleCount];
 	struct timespec start, end, duration;
 	clock_gettime(CLOCK_REALTIME, &start);
 	for (index = 0; index < sampleCount; index++)
@@ -137,8 +137,14 @@ int main(int argc, char **argv)
 	double sampleRateHz = (1.0 * sampleCount) / (duration.tv_sec + (duration.tv_nsec / 1000000000.0));
 	printf("duration: %lld.%.9ld\n", (long long)duration.tv_sec, duration.tv_nsec);
 	printf("sample rate: %f\n", sampleRateHz);
+
+	for (index = 0; index < sampleCount; index++)
+	{
+		// Sloppy upscale from 10-bit to 16-bit.
+		values[index] = (short)(values[index] * 1.6);
+	}
 	
-	FILE* file = wavfile_open("sound.wav",(int)sampleRateHz);
+	FILE* file = wavfile_open("sound.wav", (int)sampleRateHz);
 	if(!file)
 	{
 		printf("Could not open file sound.wav");
